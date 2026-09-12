@@ -254,8 +254,8 @@ export const ServicesList: React.FC<ServicesListProps> = ({
               </p>
               <p className="text-xs sm:text-sm text-zinc-600 font-bold max-w-md mx-auto">
                 {lang === 'ar'
-                  ? 'هذا القسم فارغ حالياً. يمكنك إضافة اشتراكات جديدة من لوحة الأدمن ← إدارة الخدمات والأسعار ← اختر قسم الاشتراكات.'
-                  : 'This section is empty. Add new items from Admin → Services → Subscriptions category.'}
+                  ? 'هذا القسم فارغ حالياً. يمكنك إضافة اشتراكات جديدة من لوحة الأدمن ← تبويب (إضافة خدمات الاشتراكات 💳).'
+                  : 'This section is empty. Add new items from Admin → Subscriptions tab.'}
               </p>
             </div>
           ) : (

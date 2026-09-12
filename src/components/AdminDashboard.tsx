@@ -14,7 +14,8 @@ import {
   Layers,
   Activity,
   Eye,
-  Search
+  Search,
+  CreditCard
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -50,7 +51,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onClearActivityLogs,
   onLogout
 }) => {
-  const [activeTab, setActiveTab] = useState<'ads' | 'notifs' | 'ip' | 'tickets' | 'orders' | 'services' | 'logs'>('ads');
+  const [activeTab, setActiveTab] = useState<'ads' | 'notifs' | 'ip' | 'tickets' | 'orders' | 'services' | 'subs' | 'logs'>('ads');
 
   // Activity Log Search State
   const [logSearch, setLogSearch] = useState('');
@@ -157,6 +158,84 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (editingServiceId === serviceId) {
       resetServiceForm();
     }
+    if (editingSubId === serviceId) {
+      resetSubForm();
+    }
+  };
+
+  // --- DIGITAL SUBSCRIPTION FORM STATE (dedicated quick-add) ---
+  const [subForm, setSubForm] = useState({
+    name: '',
+    description: '',
+    priceStr: '25',
+    currency: 'ILS' as 'ILS' | 'USD',
+    minQuantityStr: '1',
+    maxQuantityStr: '12',
+    speed: 'تفعيل فوري',
+    guarantee: 'ضمان كامل المدة',
+    badge: ''
+  });
+  const [editingSubId, setEditingSubId] = useState<string | null>(null);
+
+  const resetSubForm = () => {
+    setSubForm({
+      name: '',
+      description: '',
+      priceStr: '25',
+      currency: 'ILS',
+      minQuantityStr: '1',
+      maxQuantityStr: '12',
+      speed: 'تفعيل فوري',
+      guarantee: 'ضمان كامل المدة',
+      badge: ''
+    });
+    setEditingSubId(null);
+  };
+
+  const digitalServices = services.filter((s) => s.category === 'subscriptions');
+
+  const handleAddOrUpdateSub = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subForm.name.trim() || !subForm.description.trim()) return;
+
+    const payload: Service = {
+      id: editingSubId || `SUB-${Date.now()}`,
+      category: 'subscriptions',
+      name: subForm.name.trim(),
+      description: subForm.description.trim(),
+      pricePer1000: parseFloat(subForm.priceStr) || 25,
+      currency: subForm.currency,
+      pricingType: 'fixed',
+      minQuantity: parseInt(subForm.minQuantityStr, 10) || 1,
+      maxQuantity: parseInt(subForm.maxQuantityStr, 10) || 12,
+      speed: subForm.speed.trim() || 'تفعيل فوري',
+      guarantee: subForm.guarantee.trim() || 'ضمان كامل المدة',
+      badge: subForm.badge.trim() || undefined,
+      iconName: 'subscriptions'
+    };
+
+    if (editingSubId) {
+      onUpdateServices(services.map((s) => (s.id === editingSubId ? payload : s)));
+    } else {
+      onUpdateServices([payload, ...services]);
+    }
+
+    resetSubForm();
+  };
+
+  const handleEditSub = (service: Service) => {
+    setEditingSubId(service.id);
+    setSubForm({
+      name: service.name,
+      description: service.description,
+      priceStr: String(service.pricePer1000),
+      currency: service.currency || 'ILS',
+      minQuantityStr: String(service.minQuantity || 1),
+      maxQuantityStr: String(service.maxQuantity || 12),
+      speed: service.speed,
+      guarantee: service.guarantee,
+      badge: service.badge || ''
+    });
   };
 
   const handleUpdatePrice = (serviceId: string, newPriceStr: string) => {
@@ -314,6 +393,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'tickets', label: 'تذاكر الدعم الفني', icon: Headphones },
             { id: 'orders', label: 'سجل الطلبات', icon: ShoppingBag },
             { id: 'services', label: 'إدارة الخدمات والأسعار', icon: Layers },
+            { id: 'subs', label: 'إضافة خدمات الاشتراكات 💳', icon: CreditCard },
             { id: 'logs', label: 'سجل النشاط والاحصائيات', icon: Activity },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -901,6 +981,194 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- TAB CONTENT: DIGITAL SUBSCRIPTIONS QUICK-ADD --- */}
+        {activeTab === 'subs' && (
+          <div className="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-8">
+            <div className="cartoon-panel p-6 space-y-4 bg-white">
+              <h3 className="text-lg font-black text-black ibm-700 flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                <span>{editingSubId ? 'تعديل اشتراك' : 'إضافة خدمة اشتراك جديدة 💳'}</span>
+              </h3>
+              <p className="text-[11px] font-bold text-zinc-500 leading-relaxed">
+                هذا الفورم يضيف مباشرة في قسم الاشتراكات الرقمية بسعر ثابت (بدون نظام لكل 1000).
+              </p>
+
+              <form onSubmit={handleAddOrUpdateSub} className="space-y-4 text-xs font-bold">
+                <div className="space-y-1">
+                  <label className="text-black block">اسم الاشتراك:</label>
+                  <input
+                    type="text"
+                    value={subForm.name}
+                    onChange={(e) => setSubForm({ ...subForm, name: e.target.value })}
+                    placeholder="مثال: نتفلكس شهر - حساب خاص"
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-black block">الوصف:</label>
+                  <textarea
+                    rows={3}
+                    value={subForm.description}
+                    onChange={(e) => setSubForm({ ...subForm, description: e.target.value })}
+                    placeholder="مثال: حساب خاص بك، تفعيل فوري، ضمان كامل المدة..."
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-black block">السعر الثابت:</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={subForm.priceStr}
+                      onChange={(e) => setSubForm({ ...subForm, priceStr: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black font-black outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-black block">العملة:</label>
+                    <select
+                      value={subForm.currency}
+                      onChange={(e) => setSubForm({ ...subForm, currency: e.target.value as 'ILS' | 'USD' })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-yellow-300 font-black border-2 border-black text-black outline-none"
+                    >
+                      <option value="ILS">الشيقل (₪ ILS)</option>
+                      <option value="USD">الدولار ($ USD)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-black block">الحد الأدنى (عدد):</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={subForm.minQuantityStr}
+                      onChange={(e) => setSubForm({ ...subForm, minQuantityStr: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black font-bold outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-black block">الحد الأعلى (عدد):</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={subForm.maxQuantityStr}
+                      onChange={(e) => setSubForm({ ...subForm, maxQuantityStr: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black font-bold outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-black block">السرعة / التفعيل:</label>
+                    <input
+                      type="text"
+                      value={subForm.speed}
+                      onChange={(e) => setSubForm({ ...subForm, speed: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-black block">الضمان:</label>
+                    <input
+                      type="text"
+                      value={subForm.guarantee}
+                      onChange={(e) => setSubForm({ ...subForm, guarantee: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-black block">بادج (اختياري):</label>
+                  <input
+                    type="text"
+                    value={subForm.badge}
+                    onChange={(e) => setSubForm({ ...subForm, badge: e.target.value })}
+                    placeholder="مثال: الأكثر طلباً 🔥"
+                    className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button type="submit" className="flex-1 py-3.5 px-4 btn-cartoon-black text-xs">
+                    {editingSubId ? 'حفظ تعديل الاشتراك' : 'إضافة الاشتراك للقسم 💳'}
+                  </button>
+                  {editingSubId && (
+                    <button type="button" onClick={resetSubForm} className="px-3 py-3 rounded-xl bg-white border-2 border-black text-black text-xs font-black">
+                      إلغاء
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            <div className="cartoon-panel p-6 space-y-4 bg-white">
+              <h3 className="text-lg font-black text-black ibm-700">اشتراكات القسم الحالية ({digitalServices.length})</h3>
+
+              {digitalServices.length === 0 ? (
+                <p className="text-xs text-zinc-500 py-6 text-center font-bold">لا توجد اشتراكات بعد — أضف أول اشتراك من الفورم.</p>
+              ) : (
+                <div className="space-y-3">
+                  {digitalServices.map((serv) => (
+                    <div key={serv.id} className="p-4 rounded-2xl bg-zinc-100 border-2 border-black space-y-3 text-xs font-bold">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-black text-black block text-sm">{serv.name}</span>
+                            {serv.badge && <span className="px-2 py-0.5 rounded-full bg-white text-black border border-black text-[10px]">{serv.badge}</span>}
+                          </div>
+                          <p className="text-zinc-600 text-[11px] leading-relaxed">{serv.description}</p>
+                          <span className="text-zinc-500 font-mono text-[11px]">subscriptions • {serv.speed}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleEditSub(serv)} className="px-3 py-2 rounded-xl bg-black text-white border-2 border-black text-[11px] font-black">
+                            تعديل
+                          </button>
+                          <button onClick={() => handleDeleteService(serv.id)} className="px-3 py-2 rounded-xl bg-white text-black border-2 border-black text-[11px] font-black">
+                            حذف
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-black pt-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-zinc-600">السعر الثابت:</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={serv.pricePer1000}
+                            onChange={(e) => handleUpdatePrice(serv.id, e.target.value)}
+                            className="w-24 px-3 py-1.5 rounded-xl bg-white border-2 border-black text-black font-black text-sm outline-none"
+                          />
+                          <span className="text-black font-black bg-yellow-300 px-2 py-0.5 rounded border border-black">
+                            {serv.currency === 'USD' ? '$ USD' : '₪ ILS'}
+                          </span>
+                        </div>
+
+                        <div className="text-zinc-500 text-[11px]">
+                          الحد الأدنى: {serv.minQuantity} • الحد الأعلى: {serv.maxQuantity}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
