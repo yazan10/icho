@@ -15,7 +15,9 @@ import {
   Activity,
   Eye,
   Search,
-  CreditCard
+  CreditCard,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -243,6 +245,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onUpdateServices(
       services.map((s) => (s.id === serviceId ? { ...s, pricePer1000: numPrice } : s))
     );
+  };
+
+  // --- REORDER SERVICES (up / down arrows) ---
+  const handleMoveService = (serviceId: string, direction: 'up' | 'down') => {
+    const idx = services.findIndex((s) => s.id === serviceId);
+    if (idx === -1) return;
+    const target = direction === 'up' ? idx - 1 : idx + 1;
+    if (target < 0 || target >= services.length) return;
+    const next = [...services];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onUpdateServices(next);
+  };
+
+  // --- REORDER SUBSCRIPTIONS within their own section ---
+  const handleMoveSub = (serviceId: string, direction: 'up' | 'down') => {
+    const subIndices = services
+      .map((s, i) => (s.category === 'subscriptions' ? i : -1))
+      .filter((i) => i !== -1);
+    const pos = subIndices.findIndex((i) => services[i].id === serviceId);
+    if (pos === -1) return;
+    const targetPos = direction === 'up' ? pos - 1 : pos + 1;
+    if (targetPos < 0 || targetPos >= subIndices.length) return;
+    const next = [...services];
+    const a = subIndices[pos];
+    const b = subIndices[targetPos];
+    [next[a], next[b]] = [next[b], next[a]];
+    onUpdateServices(next);
   };
 
   // --- AD HANDLERS ---
@@ -937,7 +966,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <h3 className="text-lg font-black text-black ibm-700">قائمة الخدمات الحالية ({services.length})</h3>
 
               <div className="space-y-3">
-                {services.map((serv) => (
+                {services.map((serv, idx) => (
                   <div key={serv.id} className="p-4 rounded-2xl bg-zinc-100 border-2 border-black space-y-3 text-xs font-bold">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="space-y-1">
@@ -949,7 +978,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <span className="text-zinc-500 font-mono text-[11px]">{serv.category} • {serv.speed}</span>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1 bg-white rounded-xl border-2 border-black p-1">
+                          <button
+                            onClick={() => handleMoveService(serv.id, 'up')}
+                            disabled={idx === 0}
+                            title="تحريك للأعلى"
+                            className="p-1.5 rounded-lg bg-zinc-100 text-black border border-black hover:bg-yellow-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleMoveService(serv.id, 'down')}
+                            disabled={idx === services.length - 1}
+                            title="تحريك للأسفل"
+                            className="p-1.5 rounded-lg bg-zinc-100 text-black border border-black hover:bg-yellow-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                        </div>
                         <button onClick={() => handleEditService(serv)} className="px-3 py-2 rounded-xl bg-black text-white border-2 border-black text-[11px] font-black">
                           تعديل
                         </button>
@@ -1124,7 +1171,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <p className="text-xs text-zinc-500 py-6 text-center font-bold">لا توجد اشتراكات بعد — أضف أول اشتراك من الفورم.</p>
               ) : (
                 <div className="space-y-3">
-                  {digitalServices.map((serv) => (
+                  {digitalServices.map((serv, subIdx) => (
                     <div key={serv.id} className="p-4 rounded-2xl bg-zinc-100 border-2 border-black space-y-3 text-xs font-bold">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                         <div className="space-y-1">
@@ -1136,7 +1183,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <span className="text-zinc-500 font-mono text-[11px]">subscriptions • {serv.speed}</span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-1 bg-white rounded-xl border-2 border-black p-1">
+                            <button
+                              onClick={() => handleMoveSub(serv.id, 'up')}
+                              disabled={subIdx === 0}
+                              title="تحريك للأعلى"
+                              className="p-1.5 rounded-lg bg-zinc-100 text-black border border-black hover:bg-yellow-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ChevronUp className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleMoveSub(serv.id, 'down')}
+                              disabled={subIdx === digitalServices.length - 1}
+                              title="تحريك للأسفل"
+                              className="p-1.5 rounded-lg bg-zinc-100 text-black border border-black hover:bg-yellow-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ChevronDown className="w-4 h-4" />
+                            </button>
+                          </div>
                           <button onClick={() => handleEditSub(serv)} className="px-3 py-2 rounded-xl bg-black text-white border-2 border-black text-[11px] font-black">
                             تعديل
                           </button>
