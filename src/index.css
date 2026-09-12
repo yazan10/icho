@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+:root {
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes ticker-seamless {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.ticker-container {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  width: max-content;
+  animation: ticker-seamless 50s linear infinite;
+  will-change: transform;
+}
+
+.ticker-container:hover {
+  animation-play-state: paused;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #fafafa;
+  color: #09090b;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  max-width: 100vw;
+  overflow-x: hidden;
+  background: #f5f5f5;
+  color: #09090b;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+img,
+svg,
+button,
+input,
+a {
+  max-width: 100%;
+}
+
+html,
+body,
+#root {
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    font-family: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  /* 3D Black & White Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #ffffff;
+    border-left: 3px solid #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 4px;
+    border: 2px solid #ffffff;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #27272a;
+  }
+}
+
+.ibm-700 {
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-weight: 700;
+}
+
+/* 3D Cartoon Neobrutalist Cards & Panels */
+.cartoon-card {
+  background-color: #ffffff;
+  color: #09090b;
+  border: 3px solid #000000;
+  box-shadow: 6px 6px 0px #000000;
+  border-radius: 20px;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.cartoon-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 10px 10px 0px #000000;
+}
+
+.cartoon-panel {
+  background-color: #ffffff;
+  border: 3.5px solid #000000;
+  box-shadow: 8px 8px 0px #000000;
+  border-radius: 24px;
+}
+
+/* Tactile 3D Buttons */
+.btn-cartoon-black {
+  background-color: #000000;
+  color: #ffffff;
+  border: 3px solid #000000;
+  box-shadow: 4px 4px 0px #71717a;
+  border-radius: 16px;
+  font-weight: 700;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-cartoon-black:hover {
+  background-color: #18181b;
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px #71717a;
+}
+
+.btn-cartoon-black:active {
+  transform: translateY(3px);
+  box-shadow: 1px 1px 0px #71717a;
+}
+
+.btn-cartoon-white {
+  background-color: #ffffff;
+  color: #000000;
+  border: 3px solid #000000;
+  box-shadow: 4px 4px 0px #000000;
+  border-radius: 16px;
+  font-weight: 700;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-cartoon-white:hover {
+  background-color: #f4f4f5;
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px #000000;
+}
+
+.btn-cartoon-white:active {
+  transform: translateY(3px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+/* 3D Badge Pill */
+.cartoon-badge {
+  background-color: #000000;
+  color: #ffffff;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+  font-weight: 700;
+  border-radius: 9999px;
+}
+
+.cartoon-badge-white {
+  background-color: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+  font-weight: 700;
+  border-radius: 9999px;
+}
+
+/* Protection against text selection */
+.unselectable {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

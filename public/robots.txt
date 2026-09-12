@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://icho.vercel.app/sitemap.xml

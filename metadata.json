@@ -1,0 +1,6 @@
+{
+  "name": "Eco Followers",
+  "description": "منصة ايكو فولورز لخدمات السوشيال ميديا 3D - تسويق ونمو الحسابات الرقمية",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
