@@ -81,6 +81,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     ticker: 'شريط متحرك أعلى الصفحة 📢',
   };
 
+  // Filter ads list by placement section
+  const [adSectionFilter, setAdSectionFilter] = useState<'all' | 'popup' | 'top_banner' | 'card_box' | 'ticker'>('all');
+  const filteredAds = adSectionFilter === 'all' ? ads : ads.filter((a) => a.type === adSectionFilter);
+
   // Notif Form State
   const [notifTitle, setNotifTitle] = useState('إشعار جديد');
   const [notifText, setNotifText] = useState('');
@@ -585,10 +589,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             <div className="lg:col-span-2 cartoon-panel p-6 space-y-4 bg-white">
-              <h3 className="text-lg font-black text-black ibm-700">قائمة الإعلانات النشطة ({ads.length})</h3>
+              <h3 className="text-lg font-black text-black ibm-700">قائمة الإعلانات ({ads.length})</h3>
+
+              {/* Placement sections filter */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <button
+                  onClick={() => setAdSectionFilter('all')}
+                  className={`px-4 py-2 rounded-xl text-[11px] font-black border-2 border-black shrink-0 transition-all ${
+                    adSectionFilter === 'all'
+                      ? 'bg-black text-yellow-300 shadow-[3px_3px_0px_#71717a]'
+                      : 'bg-zinc-100 text-black hover:bg-zinc-200'
+                  }`}
+                >
+                  الكل ({ads.length})
+                </button>
+                {(['card_box', 'popup', 'top_banner', 'ticker'] as const).map((t) => {
+                  const count = ads.filter((a) => a.type === t).length;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setAdSectionFilter(t)}
+                      className={`px-4 py-2 rounded-xl text-[11px] font-black border-2 border-black shrink-0 transition-all ${
+                        adSectionFilter === t
+                          ? 'bg-black text-yellow-300 shadow-[3px_3px_0px_#71717a]'
+                          : 'bg-zinc-100 text-black hover:bg-zinc-200'
+                      }`}
+                    >
+                      {adPlacementNames[t]} ({count})
+                    </button>
+                  );
+                })}
+              </div>
 
               <div className="space-y-4">
-                {ads.map((ad) => (
+                {filteredAds.length === 0 ? (
+                  <p className="text-xs text-zinc-500 py-6 text-center font-bold">
+                    لا توجد إعلانات في قسم {adSectionFilter === 'all' ? 'الكل' : adPlacementNames[adSectionFilter]} بعد.
+                  </p>
+                ) : (
+                filteredAds.map((ad) => (
                   <div key={ad.id} className="p-4 rounded-2xl bg-zinc-100 border-2 border-black flex items-start justify-between gap-4">
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
@@ -622,7 +661,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </button>
                     </div>
                   </div>
-                ))}
+                )))}
               </div>
             </div>
           </div>
