@@ -1,6 +1,6 @@
 export interface Service {
   id: string;
-  category: 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'telegram' | 'twitter' | 'subscriptions';
+  category: 'instagram' | 'tiktok' | 'youtube' | 'facebook' | 'telegram' | 'twitter' | 'subscriptions' | 'unlock';
   name: string;
   nameEn?: string;
   description: string;

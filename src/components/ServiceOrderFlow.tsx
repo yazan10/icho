@@ -33,7 +33,7 @@ export const ServiceOrderFlow: React.FC<ServiceOrderFlowProps> = ({
   onOrderCreated
 }) => {
   const t = translations[lang];
-  const isFixedPrice = service.pricingType === 'fixed' || service.category === 'subscriptions';
+  const isFixedPrice = service.pricingType === 'fixed' || service.category === 'subscriptions' || service.category === 'unlock';
   const [step, setStep] = useState<'details' | 'invoice'>('details');
   const [quantityStr, setQuantityStr] = useState<string>(String(service.minQuantity || (isFixedPrice ? 1 : 1000)));
   const [targetAccount, setTargetAccount] = useState<string>('');

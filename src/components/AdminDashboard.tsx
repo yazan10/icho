@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
+import { IconPicker } from './IconPicker';
 
 interface AdminDashboardProps {
   ads: AdCampaign[];
@@ -102,6 +103,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     pricePer1000Str: '32',
     currency: 'ILS' as 'ILS' | 'USD',
     pricingType: 'per_1000' as 'per_1000' | 'fixed',
+    icon: '',
     minQuantityStr: '1000',
     maxQuantityStr: '100000',
     speed: '1,000 - 5,000 / يومياً',
@@ -118,6 +120,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       pricePer1000Str: '32',
       currency: 'ILS',
       pricingType: 'per_1000',
+      icon: '',
       minQuantityStr: '1000',
       maxQuantityStr: '100000',
       speed: '1,000 - 5,000 / يومياً',
@@ -131,7 +134,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!serviceForm.name.trim() || !serviceForm.description.trim()) return;
 
-    const isFixed = serviceForm.pricingType === 'fixed' || serviceForm.category === 'subscriptions';
+    const isFixed = serviceForm.pricingType === 'fixed' || serviceForm.category === 'subscriptions' || serviceForm.category === 'unlock';
 
     const payload: Service = {
       id: editingServiceId || `SRV-${Date.now()}`,
@@ -146,7 +149,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       speed: serviceForm.speed.trim() || 'مباشر',
       guarantee: serviceForm.guarantee.trim() || 'ضمان 365 يوم',
       badge: serviceForm.badge.trim() || undefined,
-      iconName: serviceForm.category
+      iconName: serviceForm.icon || serviceForm.category
     };
 
     if (editingServiceId) {
@@ -166,7 +169,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       description: service.description,
       pricePer1000Str: String(service.pricePer1000),
       currency: service.currency || 'ILS',
-      pricingType: service.pricingType || (service.category === 'subscriptions' ? 'fixed' : 'per_1000'),
+      pricingType: service.pricingType || (service.category === 'subscriptions' || service.category === 'unlock' ? 'fixed' : 'per_1000'),
+      icon: service.iconName && service.iconName !== service.category ? service.iconName : '',
       minQuantityStr: String(service.minQuantity || 1000),
       maxQuantityStr: String(service.maxQuantity || 100000),
       speed: service.speed,
@@ -191,6 +195,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     description: '',
     priceStr: '25',
     currency: 'ILS' as 'ILS' | 'USD',
+    icon: '',
     minQuantityStr: '1',
     maxQuantityStr: '12',
     speed: 'تفعيل فوري',
@@ -205,6 +210,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       description: '',
       priceStr: '25',
       currency: 'ILS',
+      icon: '',
       minQuantityStr: '1',
       maxQuantityStr: '12',
       speed: 'تفعيل فوري',
@@ -233,7 +239,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       speed: subForm.speed.trim() || 'تفعيل فوري',
       guarantee: subForm.guarantee.trim() || 'ضمان كامل المدة',
       badge: subForm.badge.trim() || undefined,
-      iconName: 'subscriptions'
+      iconName: subForm.icon || 'subscriptions'
     };
 
     if (editingSubId) {
@@ -252,6 +258,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       description: service.description,
       priceStr: String(service.pricePer1000),
       currency: service.currency || 'ILS',
+      icon: service.iconName && service.iconName !== 'subscriptions' ? service.iconName : '',
       minQuantityStr: String(service.minQuantity || 1),
       maxQuantityStr: String(service.maxQuantity || 12),
       speed: service.speed,
@@ -947,12 +954,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       value={serviceForm.category}
                       onChange={(e) => {
                         const nextCat = e.target.value as Service['category'];
+                        const isFixedCat = nextCat === 'subscriptions' || nextCat === 'unlock';
                         setServiceForm({
                           ...serviceForm,
                           category: nextCat,
-                          pricingType: nextCat === 'subscriptions' ? 'fixed' : serviceForm.pricingType,
-                          minQuantityStr: nextCat === 'subscriptions' && serviceForm.minQuantityStr === '1000' ? '1' : serviceForm.minQuantityStr,
-                          maxQuantityStr: nextCat === 'subscriptions' && serviceForm.maxQuantityStr === '100000' ? '12' : serviceForm.maxQuantityStr,
+                          pricingType: isFixedCat ? 'fixed' : serviceForm.pricingType,
+                          minQuantityStr: isFixedCat && serviceForm.minQuantityStr === '1000' ? '1' : serviceForm.minQuantityStr,
+                          maxQuantityStr: isFixedCat && serviceForm.maxQuantityStr === '100000' ? '12' : serviceForm.maxQuantityStr,
                         });
                       }}
                       className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none font-bold"
@@ -964,6 +972,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <option value="telegram">Telegram</option>
                       <option value="twitter">Twitter</option>
                       <option value="subscriptions">💳 الاشتراكات الرقمية</option>
+                      <option value="unlock">🔓 فك قفل الحسابات</option>
                     </select>
                   </div>
 
@@ -1059,6 +1068,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onChange={(e) => setServiceForm({ ...serviceForm, badge: e.target.value })}
                     placeholder="مثال: شائع"
                     className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-black block">أيقونة الخدمة (اختياري — من مكتبة الأيقونات):</label>
+                  <IconPicker
+                    value={serviceForm.icon}
+                    onChange={(key) => setServiceForm({ ...serviceForm, icon: key })}
                   />
                 </div>
 
@@ -1261,6 +1278,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onChange={(e) => setSubForm({ ...subForm, badge: e.target.value })}
                     placeholder="مثال: الأكثر طلباً 🔥"
                     className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-black block">أيقونة الاشتراك (اختياري):</label>
+                  <IconPicker
+                    value={subForm.icon}
+                    onChange={(key) => setSubForm({ ...subForm, icon: key })}
                   />
                 </div>
 

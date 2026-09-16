@@ -83,12 +83,12 @@ export function App() {
     try {
       const parsed: Service[] = JSON.parse(saved);
       return parsed.map(s => {
-        const isFixed = (s as Service).pricingType === 'fixed' || s.category === 'subscriptions';
+        const isFixed = (s as Service).pricingType === 'fixed' || s.category === 'subscriptions' || (s as Service).category === 'unlock';
         return {
           ...s,
           minQuantity: isFixed ? (s.minQuantity || 1) : 1000,
           currency: s.currency || 'ILS',
-          pricingType: (s as Service).pricingType || (s.category === 'subscriptions' ? 'fixed' : 'per_1000')
+          pricingType: (s as Service).pricingType || (s.category === 'subscriptions' || (s as Service).category === 'unlock' ? 'fixed' : 'per_1000')
         };
       });
     } catch {

@@ -59,8 +59,10 @@ export const translations = {
     catTelegram: 'تلغرام',
     catTwitter: 'منصة X',
     catSubscriptions: 'الاشتراكات الرقمية',
+    catUnlock: 'فك قفل الحسابات',
     sectionSocial: 'خدمات السوشيال ميديا',
     sectionDigital: 'الاشتراكات الرقمية',
+    sectionUnlock: 'فك قفل الحسابات',
 
     // Service Card
     speedLabel: 'السرعة:',
@@ -167,8 +169,10 @@ export const translations = {
     catTelegram: 'Telegram',
     catTwitter: 'X / Twitter',
     catSubscriptions: 'Digital Subscriptions',
+    catUnlock: 'Account Unlock',
     sectionSocial: 'Social Media Services',
     sectionDigital: 'Digital Subscriptions',
+    sectionUnlock: 'Account Unlock',
 
     // Service Card
     speedLabel: 'Speed:',

@@ -4,6 +4,8 @@ import type { Language, Currency } from '../i18n/translations';
 import { translations, exchangeRateILS } from '../i18n/translations';
 import { Zap, ShieldCheck, ArrowRight } from 'lucide-react';
 import { InstagramIcon, TikTokIcon, YouTubeIcon, FacebookIcon, TelegramIcon, TwitterIcon, SubscriptionsIcon } from './Icons';
+import { getServiceIconComponent } from './ServiceIcons';
+import { LockOpen } from 'lucide-react';
 
 interface ServiceCardProps {
   service: Service;
@@ -20,8 +22,13 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 }) => {
   const t = translations[lang];
 
-  const getIcon = (cat: string) => {
-    switch (cat) {
+  const getIcon = (srv: Service) => {
+    // Custom icon chosen per-service from the icon library
+    if (srv.iconName) {
+      const CustomIcon = getServiceIconComponent(srv.iconName);
+      return <CustomIcon className="w-5 h-5 text-black" />;
+    }
+    switch (srv.category) {
       case 'instagram': return <InstagramIcon className="w-5 h-5 text-black" />;
       case 'tiktok': return <TikTokIcon className="w-5 h-5 text-black" />;
       case 'youtube': return <YouTubeIcon className="w-5 h-5 text-black" />;
@@ -29,12 +36,13 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
       case 'telegram': return <TelegramIcon className="w-5 h-5 text-black" />;
       case 'twitter': return <TwitterIcon className="w-5 h-5 text-black" />;
       case 'subscriptions': return <SubscriptionsIcon className="w-5 h-5 text-black" />;
+      case 'unlock': return <LockOpen className="w-5 h-5 text-black" />;
       default: return <Zap className="w-5 h-5 text-black" />;
     }
   };
 
-  // Price formatting: fixed price for subscriptions, per-1000 for SMM
-  const isFixedPrice = service.pricingType === 'fixed' || service.category === 'subscriptions';
+  // Price formatting: fixed price for subscriptions & unlock, per-1000 for SMM
+  const isFixedPrice = service.pricingType === 'fixed' || service.category === 'subscriptions' || service.category === 'unlock';
   const serviceCurrency = service.currency || 'ILS';
   const displayPrice = isFixedPrice
     ? (serviceCurrency === 'ILS'
@@ -54,7 +62,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         {/* Category & Badge */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black text-amber-300 border-2 border-black text-xs font-black">
-            {getIcon(service.category)}
+            {getIcon(service)}
             <span className="uppercase text-[11px] tracking-wider">{service.category}</span>
           </div>
 

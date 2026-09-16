@@ -15,7 +15,8 @@ import {
   Star,
   Layers,
   ArrowRight,
-  Info
+  Info,
+  LockOpen
 } from 'lucide-react';
 import {
   InstagramIcon,
@@ -42,8 +43,8 @@ export const ServicesList: React.FC<ServicesListProps> = ({
 }) => {
   const t = translations[lang];
 
-  // Main Departments: social media services vs digital subscriptions
-  const [mainSection, setMainSection] = useState<'social' | 'digital'>('social');
+  // Main Departments: social media vs digital subscriptions vs account unlock
+  const [mainSection, setMainSection] = useState<'social' | 'digital' | 'unlock'>('social');
 
   // Top Tabs State matching SMM Panel ( طلب جديد | الاشتراكات | قائمة المفضلة )
   const [activeTab, setActiveTab] = useState<'new_order' | 'subscriptions' | 'favorites'>('new_order');
@@ -78,8 +79,9 @@ export const ServicesList: React.FC<ServicesListProps> = ({
   ];
 
   // Split departments
-  const socialServices = useMemo(() => services.filter((s) => s.category !== 'subscriptions'), [services]);
+  const socialServices = useMemo(() => services.filter((s) => s.category !== 'subscriptions' && s.category !== 'unlock'), [services]);
   const digitalServices = useMemo(() => services.filter((s) => s.category === 'subscriptions'), [services]);
+  const unlockServices = useMemo(() => services.filter((s) => s.category === 'unlock'), [services]);
 
   const filteredDigitalServices = useMemo(() => {
     return digitalServices.filter((s) => {
@@ -90,6 +92,16 @@ export const ServicesList: React.FC<ServicesListProps> = ({
       );
     });
   }, [digitalServices, searchQuery]);
+
+  const filteredUnlockServices = useMemo(() => {
+    return unlockServices.filter((s) => {
+      if (!searchQuery.trim()) return true;
+      return (
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    });
+  }, [unlockServices, searchQuery]);
 
   // Helper for Numeric Service Code
   const getServiceCode = (id: string) => {
@@ -189,7 +201,7 @@ export const ServicesList: React.FC<ServicesListProps> = ({
   return (
     <section id="services" className="py-8 sm:py-12 max-w-[1400px] mx-auto px-3 sm:px-5 lg:px-8 space-y-6 scroll-mt-20 select-none">
       
-      {/* 0. MAIN DEPARTMENTS SWITCHER: Social Media vs Digital Subscriptions */}
+      {/* 0. MAIN DEPARTMENTS SWITCHER: Social vs Subscriptions vs Unlock */}
       <div className="bg-white rounded-[24px] border-4 border-black p-3.5 sm:p-4 shadow-[6px_6px_0px_#000000] space-y-3">
         <div className="flex items-center gap-2 px-1">
           <span className="w-2.5 h-2.5 rounded-full bg-black border border-black animate-pulse" />
@@ -197,7 +209,7 @@ export const ServicesList: React.FC<ServicesListProps> = ({
             {lang === 'ar' ? 'أقسام المنصة' : 'Platform Departments'}
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={() => setMainSection('social')}
             className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-black border-3 border-black transition-all flex items-center justify-center gap-2 ${
@@ -221,6 +233,18 @@ export const ServicesList: React.FC<ServicesListProps> = ({
             <SubscriptionsIcon className="w-5 h-5" />
             <span>{lang === 'ar' ? 'الاشتراكات الرقمية' : 'Digital Subscriptions'}</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-400 text-black border border-black">{digitalServices.length}</span>
+          </button>
+          <button
+            onClick={() => setMainSection('unlock')}
+            className={`px-5 py-3.5 rounded-2xl text-sm sm:text-base font-black border-3 border-black transition-all flex items-center justify-center gap-2 ${
+              mainSection === 'unlock'
+                ? 'bg-black text-yellow-300 shadow-[4px_4px_0px_#71717a] scale-[1.02]'
+                : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'
+            }`}
+          >
+            <LockOpen className="w-5 h-5" />
+            <span>{lang === 'ar' ? 'فك قفل الحسابات' : 'Account Unlock'}</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-400 text-black border border-black">{unlockServices.length}</span>
           </button>
         </div>
       </div>
@@ -261,6 +285,53 @@ export const ServicesList: React.FC<ServicesListProps> = ({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {filteredDigitalServices.map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  lang={lang}
+                  currency={currency}
+                  onSelectService={onSelectService}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : mainSection === 'unlock' ? (
+        /* ================= ACCOUNT UNLOCK DEPARTMENT (managed from Admin) ================= */
+        <div className="space-y-5">
+          <div className="bg-white rounded-[28px] border-4 border-black p-5 sm:p-7 shadow-[8px_8px_0px_#000000] space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-black text-yellow-300 border-2 border-black flex items-center justify-center shadow-[3px_3px_0px_#71717a]">
+                <LockOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-black text-black ibm-700">
+                  {lang === 'ar' ? 'قسم فك قفل الحسابات 🔓' : 'Account Unlock 🔓'}
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 font-bold">
+                  {lang === 'ar'
+                    ? 'خدمات استرجاع وفك قفل حسابات السوشيال ميديا - تضاف وتدار من لوحة الأدمن'
+                    : 'Social account recovery & unlock services - added via Admin panel'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {filteredUnlockServices.length === 0 ? (
+            <div className="bg-yellow-100 rounded-[28px] border-4 border-black p-8 sm:p-10 text-center space-y-3 shadow-[8px_8px_0px_#000000]">
+              <LockOpen className="w-12 h-12 text-zinc-400 mx-auto" />
+              <p className="text-base font-black text-black">
+                {lang === 'ar' ? 'لا توجد خدمات فك قفل بعد' : 'No unlock services yet'}
+              </p>
+              <p className="text-xs sm:text-sm text-zinc-600 font-bold max-w-md mx-auto">
+                {lang === 'ar'
+                  ? 'هذا القسم فارغ حالياً. يمكنك إضافة خدمات جديدة من لوحة الأدمن ← إدارة الخدمات والأسعار ← اختر قسم فك القفل.'
+                  : 'This section is empty. Add new items from Admin → Services → Unlock category.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {filteredUnlockServices.map((service) => (
                 <ServiceCard
                   key={service.id}
                   service={service}
