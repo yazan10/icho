@@ -70,10 +70,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [adTitle, setAdTitle] = useState('');
   const [adDesc, setAdDesc] = useState('');
   const [adBadge, setAdBadge] = useState('عرض خاص 🔥');
-  const [adDiscount] = useState<number>(20);
+  const [adDiscount, setAdDiscount] = useState<number>(20);
   const [adType, setAdType] = useState<'popup' | 'top_banner' | 'card_box' | 'ticker'>('card_box');
   const [adUrl, setAdUrl] = useState('');
   const [adButtonText, setAdButtonText] = useState('احصل على العرض عبر الواتساب');
+  const [editingAdId, setEditingAdId] = useState<string | null>(null);
+
+  const resetAdForm = () => {
+    setAdTitle('');
+    setAdDesc('');
+    setAdBadge('عرض خاص 🔥');
+    setAdDiscount(20);
+    setAdType('card_box');
+    setAdUrl('');
+    setAdButtonText('احصل على العرض عبر الواتساب');
+    setEditingAdId(null);
+  };
 
   // Arabic placement names + where each ad type appears
   const adPlacementNames: Record<string, string> = {
@@ -388,23 +400,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!adTitle.trim() || !adDesc.trim()) return;
 
-    const newAd: AdCampaign = {
-      id: 'AD-' + Date.now(),
-      title: adTitle,
-      description: adDesc,
-      url: adUrl.trim() || undefined,
-      badgeText: adBadge,
-      discountPercentage: adDiscount,
-      buttonText: adButtonText.trim() || 'احصل على العرض عبر الواتساب',
-      active: true,
-      type: adType,
-      createdAt: new Date().toISOString()
-    };
+    if (editingAdId) {
+      onUpdateAds(ads.map((ad) => (ad.id === editingAdId ? {
+        ...ad,
+        title: adTitle,
+        description: adDesc,
+        url: adUrl.trim() || undefined,
+        badgeText: adBadge,
+        discountPercentage: adDiscount,
+        buttonText: adButtonText.trim() || 'احصل على العرض عبر الواتساب',
+        type: adType,
+      } : ad)));
+    } else {
+      const newAd: AdCampaign = {
+        id: 'AD-' + Date.now(),
+        title: adTitle,
+        description: adDesc,
+        url: adUrl.trim() || undefined,
+        badgeText: adBadge,
+        discountPercentage: adDiscount,
+        buttonText: adButtonText.trim() || 'احصل على العرض عبر الواتساب',
+        active: true,
+        type: adType,
+        createdAt: new Date().toISOString()
+      };
 
-    onUpdateAds([newAd, ...ads]);
-    setAdTitle('');
-    setAdDesc('');
-    setAdUrl('');
+      onUpdateAds([newAd, ...ads]);
+    }
+
+    resetAdForm();
+  };
+
+  const handleEditAd = (ad: AdCampaign) => {
+    setEditingAdId(ad.id);
+    setAdTitle(ad.title);
+    setAdDesc(ad.description);
+    setAdBadge(ad.badgeText || 'عرض خاص 🔥');
+    setAdDiscount(ad.discountPercentage ?? 20);
+    setAdType(ad.type);
+    setAdUrl(ad.url || '');
+    setAdButtonText(ad.buttonText);
   };
 
   const handleToggleAd = (id: string) => {
@@ -413,6 +448,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleDeleteAd = (id: string) => {
     onUpdateAds(ads.filter((ad) => ad.id !== id));
+    if (editingAdId === id) {
+      resetAdForm();
+    }
   };
 
   // --- NOTIFICATION HANDLERS ---
@@ -583,7 +621,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="cartoon-panel p-6 space-y-4 bg-white">
               <h3 className="text-lg font-black text-black ibm-700 flex items-center gap-2">
                 <Plus className="w-5 h-5" />
-                <span>إنشاء إعلان جديد في المنصة</span>
+                <span>{editingAdId ? 'تعديل الإعلان ✏️' : 'إنشاء إعلان جديد في المنصة'}</span>
               </h3>
 
               <form onSubmit={handleAddAd} className="space-y-4 text-xs font-bold">
@@ -658,24 +696,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-black block">نص زر الإعلان:</label>
-                    <input
-                      type="text"
-                      value={adButtonText}
-                      onChange={(e) => setAdButtonText(e.target.value)}
-                      placeholder="مثال: زيارة العرض الآن"
-                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-black block">نص زر الإعلان:</label>
+                      <input
+                        type="text"
+                        value={adButtonText}
+                        onChange={(e) => setAdButtonText(e.target.value)}
+                        placeholder="مثال: زيارة العرض الآن"
+                        className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-black block">نسبة الخصم %:</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={adDiscount}
+                        onChange={(e) => setAdDiscount(parseInt(e.target.value.replace(/[^0-9]/g, '')) || 0)}
+                        placeholder="20"
+                        className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black font-black outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-3.5 px-4 btn-cartoon-black text-xs"
-                >
-                  إطلاق الإعلان فوراً
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 py-3.5 px-4 btn-cartoon-black text-xs"
+                  >
+                    {editingAdId ? 'حفظ تعديل الإعلان ✏️' : 'إطلاق الإعلان فوراً'}
+                  </button>
+                  {editingAdId && (
+                    <button type="button" onClick={resetAdForm} className="px-3 py-3 rounded-xl bg-white border-2 border-black text-black text-xs font-black">
+                      إلغاء
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
 
@@ -742,6 +801,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         }`}
                       >
                         {ad.active ? 'تعطيل' : 'تفعيل'}
+                      </button>
+
+                      <button
+                        onClick={() => handleEditAd(ad)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-black border-2 border-black bg-yellow-300 text-black hover:bg-yellow-400"
+                      >
+                        تعديل ✏️
                       </button>
 
                       <button
