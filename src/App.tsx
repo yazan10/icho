@@ -277,7 +277,7 @@ export function App() {
     <div className={`min-h-screen overflow-x-hidden bg-zinc-100 text-zinc-950 font-sans relative pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-0 ${lang === 'ar' ? 'dir-rtl' : 'dir-ltr'}`}>
       
       {/* System Ticker Bar */}
-      <NotificationTicker notifications={notifications} />
+      <NotificationTicker notifications={notifications} ads={ads} />
 
       {/* Navigation Bar */}
       <Navbar

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { AdCampaign, SystemNotification, BlockedIP, SupportTicket, Order, Service, ActivityLog } from '../types';
 import {
   Megaphone,
@@ -55,6 +55,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'ads' | 'notifs' | 'ip' | 'tickets' | 'orders' | 'services' | 'subs' | 'logs'>('ads');
 
+  // Admin tabs horizontal scroll (arrows to navigate options)
+  const tabsScrollRef = useRef<HTMLDivElement>(null);
+  const scrollTabs = (direction: 'left' | 'right') => {
+    tabsScrollRef.current?.scrollBy({ left: direction === 'left' ? -260 : 260, behavior: 'smooth' });
+  };
+
   // Activity Log Search State
   const [logSearch, setLogSearch] = useState('');
 
@@ -63,7 +69,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [adDesc, setAdDesc] = useState('');
   const [adBadge, setAdBadge] = useState('عرض خاص 🔥');
   const [adDiscount] = useState<number>(20);
-  const [adType, setAdType] = useState<'popup' | 'top_banner'>('popup');
+  const [adType, setAdType] = useState<'popup' | 'top_banner' | 'card_box' | 'ticker'>('card_box');
+  const [adUrl, setAdUrl] = useState('');
+  const [adButtonText, setAdButtonText] = useState('احصل على العرض عبر الواتساب');
+
+  // Arabic placement names + where each ad type appears
+  const adPlacementNames: Record<string, string> = {
+    popup: 'نافذة منبثقة 🪟',
+    top_banner: 'شريط أسود أعلى الموقع ⬛',
+    card_box: 'بطاقة / كارت بين الأقسام 🎴',
+    ticker: 'شريط متحرك أعلى الصفحة 📢',
+  };
 
   // Notif Form State
   const [notifTitle, setNotifTitle] = useState('إشعار جديد');
@@ -283,9 +299,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       id: 'AD-' + Date.now(),
       title: adTitle,
       description: adDesc,
+      url: adUrl.trim() || undefined,
       badgeText: adBadge,
       discountPercentage: adDiscount,
-      buttonText: 'احصل على العرض عبر الواتساب',
+      buttonText: adButtonText.trim() || 'احصل على العرض عبر الواتساب',
       active: true,
       type: adType,
       createdAt: new Date().toISOString()
@@ -294,6 +311,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onUpdateAds([newAd, ...ads]);
     setAdTitle('');
     setAdDesc('');
+    setAdUrl('');
   };
 
   const handleToggleAd = (id: string) => {
@@ -414,7 +432,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        {/* Navigation Tabs with scroll arrows */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => scrollTabs('right')}
+            title="تمرير الخيارات"
+            className="p-2.5 rounded-xl bg-black text-white border-2 border-black shadow-[3px_3px_0px_#71717a] hover:bg-zinc-800 active:translate-y-0.5 transition-all shrink-0"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          <div ref={tabsScrollRef} className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none flex-1 scroll-smooth">
           {[
             { id: 'ads', label: 'نظام الإعلانات (Ads)', icon: Megaphone },
             { id: 'notifs', label: 'بث الإشعارات لليوزر', icon: Bell },
@@ -442,6 +471,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </button>
             );
           })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => scrollTabs('left')}
+            title="تمرير الخيارات"
+            className="p-2.5 rounded-xl bg-black text-white border-2 border-black shadow-[3px_3px_0px_#71717a] hover:bg-zinc-800 active:translate-y-0.5 transition-all shrink-0"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
         </div>
 
         {/* --- TAB CONTENT: ADS SYSTEM --- */}
@@ -490,15 +529,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-black block">نوع الإعلان:</label>
+                    <label className="text-black block">مكان ظهور الإعلان:</label>
                     <select
                       value={adType}
                       onChange={(e) => setAdType(e.target.value as any)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                      className="w-full px-3 py-2.5 rounded-xl bg-yellow-300 font-black border-2 border-black text-black outline-none"
                     >
-                      <option value="popup">نافذة منبثقة (Popup)</option>
-                      <option value="top_banner">شريط أعلى الموقع (Banner)</option>
+                      <option value="card_box">🎴 بطاقة / كارت بين الأقسام</option>
+                      <option value="popup">🪟 نافذة منبثقة فوق الصفحة</option>
+                      <option value="top_banner">⬛ شريط أسود أعلى الموقع</option>
+                      <option value="ticker">📢 شريط متحرك أعلى الصفحة</option>
                     </select>
+                  </div>
+                </div>
+
+                <p className="text-[11px] font-bold text-zinc-500 bg-zinc-100 border-2 border-black rounded-xl px-3 py-2 leading-relaxed">
+                  {adType === 'card_box' && 'سيظهر كبطاقة إعلان (كارت) بين أقسام المنصة — اضغط عليها يفتح رابط المعلن.'}
+                  {adType === 'popup' && 'سيظهر كنافذة منبثقة فوق الصفحة عند دخول الزائر (يظهر أول إعلان منبثق نشط فقط).'}
+                  {adType === 'top_banner' && 'سيظهر كشريط أسود أعلى الموقع تحت الهيدر (يظهر أول شريط نشط فقط).'}
+                  {adType === 'ticker' && 'سيظهر كنص متحرك في شريط التحديثات أعلى الصفحة.'}
+                </p>
+
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-black block">رابط المعلن (يفتح عند الضغط):</label>
+                    <input
+                      type="text"
+                      value={adUrl}
+                      onChange={(e) => setAdUrl(e.target.value)}
+                      placeholder="مثال: https://instagram.com/... (اتركه فارغاً للواتساب)"
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none font-mono text-left"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-black block">نص زر الإعلان:</label>
+                    <input
+                      type="text"
+                      value={adButtonText}
+                      onChange={(e) => setAdButtonText(e.target.value)}
+                      placeholder="مثال: زيارة العرض الآن"
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                    />
                   </div>
                 </div>
 
@@ -522,8 +595,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border border-black ${ad.active ? 'bg-black text-white' : 'bg-zinc-300 text-zinc-700'}`}>
                           {ad.active ? 'نشط الآن 🟢' : 'معطل ⚪'}
                         </span>
-                        <span className="px-2 py-0.5 rounded-full bg-white text-black font-mono border border-black text-[10px]">
-                          {ad.type}
+                        <span className="px-2 py-0.5 rounded-full bg-white text-black border border-black text-[10px] font-black">
+                          {adPlacementNames[ad.type] || ad.type}
                         </span>
                         <span className="text-xs font-black text-black">{ad.badgeText}</span>
                       </div>

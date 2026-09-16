@@ -1,20 +1,32 @@
 import React from 'react';
-import type { SystemNotification } from '../types';
+import type { SystemNotification, AdCampaign } from '../types';
 import { Bell, Sparkles } from 'lucide-react';
 
 interface NotificationTickerProps {
   notifications: SystemNotification[];
+  ads?: AdCampaign[];
 }
 
-export const NotificationTicker: React.FC<NotificationTickerProps> = ({ notifications }) => {
+export const NotificationTicker: React.FC<NotificationTickerProps> = ({ notifications, ads = [] }) => {
   const activeNotifications = notifications.filter((n) => n.active);
 
-  if (activeNotifications.length === 0) return null;
+  // Ticker-placement ads appear in the moving bar too
+  const tickerAds = ads.filter((a) => a.active && a.type === 'ticker');
+  const adItems = tickerAds.map((a) => ({
+    id: a.id,
+    title: a.badgeText || '📢 إعلان',
+    text: `${a.title} - ${a.description}`,
+    date: '',
+  }));
 
-  // Multiply notifications if list is short to ensure seamless infinite looping without gaps
-  const listToDisplay = activeNotifications.length < 3
-    ? [...activeNotifications, ...activeNotifications, ...activeNotifications]
-    : activeNotifications;
+  const allItems = [...adItems, ...activeNotifications];
+
+  if (allItems.length === 0) return null;
+
+  // Multiply items if list is short to ensure seamless infinite looping without gaps
+  const listToDisplay = allItems.length < 3
+    ? [...allItems, ...allItems, ...allItems]
+    : allItems;
 
   const renderGroup = (groupKey: string) => (
     <div key={groupKey} className="inline-flex items-center gap-6 shrink-0 pr-6" dir="rtl">
@@ -22,9 +34,11 @@ export const NotificationTicker: React.FC<NotificationTickerProps> = ({ notifica
         <div key={`${groupKey}-${n.id}-${idx}`} className="inline-flex items-center gap-2.5 shrink-0 whitespace-nowrap text-xs sm:text-sm font-bold text-black">
           <Sparkles className="w-3.5 h-3.5 text-black shrink-0" />
           <span>{n.title ? `${n.title}: ` : ''}{n.text}</span>
-          <span className="text-[10px] text-zinc-600 font-mono bg-zinc-100 border border-zinc-300 px-1.5 py-0.5 rounded font-bold">
-            ({n.date})
-          </span>
+          {n.date ? (
+            <span className="text-[10px] text-zinc-600 font-mono bg-zinc-100 border border-zinc-300 px-1.5 py-0.5 rounded font-bold">
+              ({n.date})
+            </span>
+          ) : null}
           <span className="text-zinc-300 mx-2 font-bold">•</span>
         </div>
       ))}
