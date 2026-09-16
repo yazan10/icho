@@ -17,7 +17,8 @@ import {
   Search,
   CreditCard,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  LockOpen
 } from 'lucide-react';
 import { IconPicker } from './IconPicker';
 
@@ -54,7 +55,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onClearActivityLogs,
   onLogout
 }) => {
-  const [activeTab, setActiveTab] = useState<'ads' | 'notifs' | 'ip' | 'tickets' | 'orders' | 'services' | 'subs' | 'logs'>('ads');
+  const [activeTab, setActiveTab] = useState<'ads' | 'notifs' | 'ip' | 'tickets' | 'orders' | 'services' | 'subs' | 'unlock' | 'logs'>('ads');
 
   // Admin tabs horizontal scroll (arrows to navigate options)
   const tabsScrollRef = useRef<HTMLDivElement>(null);
@@ -187,6 +188,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (editingSubId === serviceId) {
       resetSubForm();
     }
+    if (editingUnlockId === serviceId) {
+      resetUnlockForm();
+    }
   };
 
   // --- DIGITAL SUBSCRIPTION FORM STATE (dedicated quick-add) ---
@@ -267,6 +271,84 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
   };
 
+  // --- ACCOUNT UNLOCK FORM STATE (dedicated quick-add) ---
+  const [unlockForm, setUnlockForm] = useState({
+    name: '',
+    description: '',
+    priceStr: '50',
+    currency: 'ILS' as 'ILS' | 'USD',
+    icon: 'unlock',
+    minQuantityStr: '1',
+    maxQuantityStr: '5',
+    speed: 'معالجة خلال 24 - 72 ساعة',
+    guarantee: 'استرجاع كامل في حال عدم النجاح',
+    badge: ''
+  });
+  const [editingUnlockId, setEditingUnlockId] = useState<string | null>(null);
+
+  const resetUnlockForm = () => {
+    setUnlockForm({
+      name: '',
+      description: '',
+      priceStr: '50',
+      currency: 'ILS',
+      icon: 'unlock',
+      minQuantityStr: '1',
+      maxQuantityStr: '5',
+      speed: 'معالجة خلال 24 - 72 ساعة',
+      guarantee: 'استرجاع كامل في حال عدم النجاح',
+      badge: ''
+    });
+    setEditingUnlockId(null);
+  };
+
+  const unlockServices = services.filter((s) => s.category === 'unlock');
+
+  const handleAddOrUpdateUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!unlockForm.name.trim() || !unlockForm.description.trim()) return;
+
+    const payload: Service = {
+      id: editingUnlockId || `UNL-${Date.now()}`,
+      category: 'unlock',
+      name: unlockForm.name.trim(),
+      description: unlockForm.description.trim(),
+      pricePer1000: parseFloat(unlockForm.priceStr) || 50,
+      currency: unlockForm.currency,
+      pricingType: 'fixed',
+      minQuantity: parseInt(unlockForm.minQuantityStr, 10) || 1,
+      maxQuantity: parseInt(unlockForm.maxQuantityStr, 10) || 5,
+      speed: unlockForm.speed.trim() || 'معالجة خلال 24 - 72 ساعة',
+      guarantee: unlockForm.guarantee.trim() || 'استرجاع كامل في حال عدم النجاح',
+      badge: unlockForm.badge.trim() || undefined,
+      iconName: unlockForm.icon || 'unlock'
+    };
+
+    if (editingUnlockId) {
+      onUpdateServices(services.map((s) => (s.id === editingUnlockId ? payload : s)));
+    } else {
+      onUpdateServices([payload, ...services]);
+    }
+
+    resetUnlockForm();
+  };
+
+  const handleEditUnlock = (service: Service) => {
+    setEditingUnlockId(service.id);
+    setUnlockForm({
+      name: service.name,
+      description: service.description,
+      priceStr: String(service.pricePer1000),
+      currency: service.currency || 'ILS',
+      icon: service.iconName || 'unlock',
+      minQuantityStr: String(service.minQuantity || 1),
+      maxQuantityStr: String(service.maxQuantity || 5),
+      speed: service.speed,
+      guarantee: service.guarantee,
+      badge: service.badge || ''
+    });
+  };
+
   const handleUpdatePrice = (serviceId: string, newPriceStr: string) => {
     const numPrice = parseFloat(newPriceStr) || 0;
     onUpdateServices(
@@ -285,10 +367,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onUpdateServices(next);
   };
 
-  // --- REORDER SUBSCRIPTIONS within their own section ---
-  const handleMoveSub = (serviceId: string, direction: 'up' | 'down') => {
+  // --- REORDER SUBSCRIPTIONS / UNLOCK within their own section ---
+  const handleMoveSub = (serviceId: string, direction: 'up' | 'down', cat: Service['category'] = 'subscriptions') => {
     const subIndices = services
-      .map((s, i) => (s.category === 'subscriptions' ? i : -1))
+      .map((s, i) => (s.category === cat ? i : -1))
       .filter((i) => i !== -1);
     const pos = subIndices.findIndex((i) => services[i].id === serviceId);
     if (pos === -1) return;
@@ -463,6 +545,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'orders', label: 'سجل الطلبات', icon: ShoppingBag },
             { id: 'services', label: 'إدارة الخدمات والأسعار', icon: Layers },
             { id: 'subs', label: 'إضافة خدمات الاشتراكات 💳', icon: CreditCard },
+            { id: 'unlock', label: 'إضافة فك قفل الحسابات 🔓', icon: LockOpen },
             { id: 'logs', label: 'سجل النشاط والاحصائيات', icon: Activity },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -1341,6 +1424,220 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </button>
                           </div>
                           <button onClick={() => handleEditSub(serv)} className="px-3 py-2 rounded-xl bg-black text-white border-2 border-black text-[11px] font-black">
+                            تعديل
+                          </button>
+                          <button onClick={() => handleDeleteService(serv.id)} className="px-3 py-2 rounded-xl bg-white text-black border-2 border-black text-[11px] font-black">
+                            حذف
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-black pt-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-zinc-600">السعر الثابت:</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={serv.pricePer1000}
+                            onChange={(e) => handleUpdatePrice(serv.id, e.target.value)}
+                            className="w-24 px-3 py-1.5 rounded-xl bg-white border-2 border-black text-black font-black text-sm outline-none"
+                          />
+                          <span className="text-black font-black bg-yellow-300 px-2 py-0.5 rounded border border-black">
+                            {serv.currency === 'USD' ? '$ USD' : '₪ ILS'}
+                          </span>
+                        </div>
+
+                        <div className="text-zinc-500 text-[11px]">
+                          الحد الأدنى: {serv.minQuantity} • الحد الأعلى: {serv.maxQuantity}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* --- TAB CONTENT: ACCOUNT UNLOCK QUICK-ADD --- */}
+        {activeTab === 'unlock' && (
+          <div className="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-8">
+            <div className="cartoon-panel p-6 space-y-4 bg-white">
+              <h3 className="text-lg font-black text-black ibm-700 flex items-center gap-2">
+                <LockOpen className="w-5 h-5" />
+                <span>{editingUnlockId ? 'تعديل خدمة فك قفل' : 'إضافة خدمة فك قفل جديدة 🔓'}</span>
+              </h3>
+              <p className="text-[11px] font-bold text-zinc-500 leading-relaxed">
+                هذا الفورم يضيف مباشرة في قسم فك قفل الحسابات بسعر ثابت.
+              </p>
+
+              <form onSubmit={handleAddOrUpdateUnlock} className="space-y-4 text-xs font-bold">
+                <div className="space-y-1">
+                  <label className="text-black block">اسم الخدمة:</label>
+                  <input
+                    type="text"
+                    value={unlockForm.name}
+                    onChange={(e) => setUnlockForm({ ...unlockForm, name: e.target.value })}
+                    placeholder="مثال: فك قفل حساب انستغرام"
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-black block">الوصف:</label>
+                  <textarea
+                    rows={3}
+                    value={unlockForm.description}
+                    onChange={(e) => setUnlockForm({ ...unlockForm, description: e.target.value })}
+                    placeholder="مثال: استرجاع الحسابات المقفلة والمخترقة خلال 72 ساعة..."
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-black block">السعر الثابت:</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={unlockForm.priceStr}
+                      onChange={(e) => setUnlockForm({ ...unlockForm, priceStr: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black font-black outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-black block">العملة:</label>
+                    <select
+                      value={unlockForm.currency}
+                      onChange={(e) => setUnlockForm({ ...unlockForm, currency: e.target.value as 'ILS' | 'USD' })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-yellow-300 font-black border-2 border-black text-black outline-none"
+                    >
+                      <option value="ILS">الشيقل (₪ ILS)</option>
+                      <option value="USD">الدولار ($ USD)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-black block">الحد الأدنى (عدد):</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={unlockForm.minQuantityStr}
+                      onChange={(e) => setUnlockForm({ ...unlockForm, minQuantityStr: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black font-bold outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-black block">الحد الأعلى (عدد):</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={unlockForm.maxQuantityStr}
+                      onChange={(e) => setUnlockForm({ ...unlockForm, maxQuantityStr: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black font-bold outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-black block">المدة / السرعة:</label>
+                    <input
+                      type="text"
+                      value={unlockForm.speed}
+                      onChange={(e) => setUnlockForm({ ...unlockForm, speed: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-black block">الضمان:</label>
+                    <input
+                      type="text"
+                      value={unlockForm.guarantee}
+                      onChange={(e) => setUnlockForm({ ...unlockForm, guarantee: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-black block">بادج (اختياري):</label>
+                  <input
+                    type="text"
+                    value={unlockForm.badge}
+                    onChange={(e) => setUnlockForm({ ...unlockForm, badge: e.target.value })}
+                    placeholder="مثال: استرجاع مضمون 🔓"
+                    className="w-full px-3 py-2.5 rounded-xl bg-zinc-100 border-2 border-black text-black outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-black block">أيقونة الخدمة (اختياري):</label>
+                  <IconPicker
+                    value={unlockForm.icon}
+                    onChange={(key) => setUnlockForm({ ...unlockForm, icon: key })}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button type="submit" className="flex-1 py-3.5 px-4 btn-cartoon-black text-xs">
+                    {editingUnlockId ? 'حفظ تعديل فك القفل' : 'إضافة الخدمة للقسم 🔓'}
+                  </button>
+                  {editingUnlockId && (
+                    <button type="button" onClick={resetUnlockForm} className="px-3 py-3 rounded-xl bg-white border-2 border-black text-black text-xs font-black">
+                      إلغاء
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            <div className="cartoon-panel p-6 space-y-4 bg-white">
+              <h3 className="text-lg font-black text-black ibm-700">خدمات فك القفل الحالية ({unlockServices.length})</h3>
+
+              {unlockServices.length === 0 ? (
+                <p className="text-xs text-zinc-500 py-6 text-center font-bold">لا توجد خدمات فك قفل بعد — أضف أول خدمة من الفورم.</p>
+              ) : (
+                <div className="space-y-3">
+                  {unlockServices.map((serv, unIdx) => (
+                    <div key={serv.id} className="p-4 rounded-2xl bg-zinc-100 border-2 border-black space-y-3 text-xs font-bold">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-black text-black block text-sm">{serv.name}</span>
+                            {serv.badge && <span className="px-2 py-0.5 rounded-full bg-white text-black border border-black text-[10px]">{serv.badge}</span>}
+                          </div>
+                          <p className="text-zinc-600 text-[11px] leading-relaxed">{serv.description}</p>
+                          <span className="text-zinc-500 font-mono text-[11px]">unlock • {serv.speed}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-1 bg-white rounded-xl border-2 border-black p-1">
+                            <button
+                              onClick={() => handleMoveSub(serv.id, 'up', 'unlock')}
+                              disabled={unIdx === 0}
+                              title="تحريك للأعلى"
+                              className="p-1.5 rounded-lg bg-zinc-100 text-black border border-black hover:bg-yellow-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleMoveSub(serv.id, 'down', 'unlock')}
+                              disabled={unIdx === unlockServices.length - 1}
+                              title="تحريك للأسفل"
+                              className="p-1.5 rounded-lg bg-zinc-100 text-black border border-black hover:bg-yellow-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <button onClick={() => handleEditUnlock(serv)} className="px-3 py-2 rounded-xl bg-black text-white border-2 border-black text-[11px] font-black">
                             تعديل
                           </button>
                           <button onClick={() => handleDeleteService(serv.id)} className="px-3 py-2 rounded-xl bg-white text-black border-2 border-black text-[11px] font-black">

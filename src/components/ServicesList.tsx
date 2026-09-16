@@ -325,8 +325,8 @@ export const ServicesList: React.FC<ServicesListProps> = ({
               </p>
               <p className="text-xs sm:text-sm text-zinc-600 font-bold max-w-md mx-auto">
                 {lang === 'ar'
-                  ? 'هذا القسم فارغ حالياً. يمكنك إضافة خدمات جديدة من لوحة الأدمن ← إدارة الخدمات والأسعار ← اختر قسم فك القفل.'
-                  : 'This section is empty. Add new items from Admin → Services → Unlock category.'}
+                  ? 'هذا القسم فارغ حالياً. يمكنك إضافة خدمات جديدة من لوحة الأدمن ← تبويب (إضافة فك قفل الحسابات 🔓).'
+                  : 'This section is empty. Add new items from Admin → Unlock tab.'}
               </p>
             </div>
           ) : (
