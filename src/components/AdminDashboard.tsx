@@ -539,10 +539,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       onChange={(e) => setAdType(e.target.value as any)}
                       className="w-full px-3 py-2.5 rounded-xl bg-yellow-300 font-black border-2 border-black text-black outline-none"
                     >
-                      <option value="card_box">🎴 بطاقة / كارت بين الأقسام</option>
-                      <option value="popup">🪟 نافذة منبثقة فوق الصفحة</option>
-                      <option value="top_banner">⬛ شريط أسود أعلى الموقع</option>
-                      <option value="ticker">📢 شريط متحرك أعلى الصفحة</option>
+                      {(['card_box', 'popup', 'top_banner', 'ticker'] as const).map((t) => (
+                        <option key={t} value={t}>
+                          {adPlacementNames[t]}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
